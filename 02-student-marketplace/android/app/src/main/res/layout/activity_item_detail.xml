@@ -73,6 +73,21 @@
             android:textSize="14sp"
             android:textColor="#9E9E9E" />
 
+            <!-- SOLD badge — hidden by default, shown when is_sold = true -->
+        <TextView
+            android:id="@+id/detail_sold_badge"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:background="#B71C1C"
+            android:text="SOLD"
+            android:textColor="#FFFFFF"
+            android:textStyle="bold"
+            android:textSize="16sp"
+            android:paddingHorizontal="12dp"
+            android:paddingVertical="6dp"
+            android:visibility="gone" />
+
         <!-- TODO: Add a "Mark as sold" button -->
 
     </LinearLayout>
