@@ -1,6 +1,6 @@
 """
 Database helper for the Student Marketplace.
-Uses MySQL for data storage.
+Uses MySQL for data storage
 """
 
 import os
@@ -10,10 +10,18 @@ DB_CONFIG = {
     "host": os.environ.get("DB_HOST", "localhost"),
     "port": int(os.environ.get("DB_PORT", "3306")),
     "user": os.environ.get("DB_USER", "root"),
-    "password": os.environ.get("DB_PASSWORD", ""),
+    "password": os.environ.get("DB_PASSWORD", "Arun22"),
     "database": os.environ.get("DB_NAME", "student_marketplace"),
 }
 
+def health_check():
+    """Check if the database connection is working."""
+    try:
+        conn = get_db()
+        conn.close()
+        print("✅ Database connection successful")
+    except Exception as e:
+        print("❌ Database connection failed:", e)
 
 def get_db():
     """Return a connection to the MySQL database."""
@@ -49,3 +57,7 @@ def init_db():
     conn.commit()
     cursor.close()
     conn.close()
+
+if __name__ == "__main__":
+    init_db()
+    health_check()

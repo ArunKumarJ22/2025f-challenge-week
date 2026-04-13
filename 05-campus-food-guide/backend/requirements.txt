@@ -1,4 +1,0 @@
-flask
-flask-cors
-mysql-connector-python>=9.0
-pytest
