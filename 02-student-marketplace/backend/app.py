@@ -25,7 +25,11 @@ from fastapi.middleware.cors import CORSMiddleware
 from typing import Optional
 
 from database import init_db, get_db
-from models import ItemCreate, ItemOut, get_all_items, get_item_by_id, create_item
+from models import (
+    ItemCreate, ItemOut,
+    get_all_items, get_item_by_id, create_item,
+    get_categories, get_items_filtered,
+)
 
 logging.basicConfig(level=logging.INFO)
 
@@ -129,77 +133,14 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
 def on_startup():
     init_db()
 
-<<<<<<< HEAD
-# ---------------------------
-#  ROUTES
-# ---------------------------
-=======
 
->>>>>>> 6b48552 (your message)
+# ---------- Endpoints ----------
+
 
 @app.get("/items", response_model=list[ItemOut])
-def list_items(
-    sort: Optional[str] = None,
-    category: Optional[str] = None,
-<<<<<<< HEAD
-    q: Optional[str] = None,
-):
-    try:
-        return get_all_items(sort=sort, category=category, q=q)
-    except Exception as e:
-        logging.error(f"Error fetching items: {e}")
-        raise HTTPException(status_code=500, detail="Failed to fetch items")
-=======
-    q: Optional[str] = None,       # S025 — keyword search
-):
-    """Return items — filter by category, search by keyword, sort. All combinable."""
-    return get_all_items(sort=sort, category=category, q=q)
->>>>>>> 6b48552 (your message)
-
-
-@app.get("/categories", response_model=list[str])
-def list_categories():
-<<<<<<< HEAD
-    conn = None
-    cursor = None
-    try:
-        conn = get_db()
-        cursor = conn.cursor()
-        cursor.execute("SELECT DISTINCT category FROM items ORDER BY category")
-        rows = cursor.fetchall()
-        return [row[0] for row in rows]
-    except Exception as e:
-        logging.error(f"Error fetching categories: {e}")
-        raise HTTPException(status_code=500, detail="Failed to fetch categories")
-    finally:
-        if cursor:
-            cursor.close()
-        if conn:
-            conn.close()
-=======
-    """Return all distinct categories that exist in the DB."""
-    conn = get_db()
-    cursor = conn.cursor()
-    cursor.execute("SELECT DISTINCT category FROM items ORDER BY category")
-    rows = cursor.fetchall()
-    cursor.close()
-    conn.close()
-    return [row[0] for row in rows]
->>>>>>> 6b48552 (your message)
-
-
-@app.get("/items/search", response_model=list[ItemOut])
-def search_items(q: str = ""):
-<<<<<<< HEAD
-    try:
-        return get_all_items(q=q)
-    except Exception as e:
-        logging.error(f"Search error: {e}")
-        raise HTTPException(status_code=500, detail="Search failed")
-=======
-    """Dedicated search endpoint — proxies to list_items with q param."""
-    return get_all_items(q=q)
->>>>>>> 6b48552 (your message)
+def list_items():
+    """Return all marketplace items, newest first."""
+    return get_all_items()
 
 
 @app.get("/items/{item_id}", response_model=ItemOut)
@@ -231,30 +172,38 @@ ALLOWED_FIELDS = {"title", "description", "price", "category", "sold"}
     return create_item(item)
 
 
-@app.patch("/items/{item_id}", response_model=ItemOut)
-def update_item(item_id: int, request_body: dict):
-    """Partially update an item — e.g. mark as sold. Returns the full updated item."""
-    # 404 check first
-    if get_item_by_id(item_id) is None:
-        raise HTTPException(status_code=404, detail="Item not found")
+# ---------- Search ----------
 
+@app.get("/items/search")
+def search_items(q: str = ""):
     conn = get_db()
-    cursor = conn.cursor()
-    fields = []
-    values = []
-    for key, value in request_body.items():
-        fields.append(f"{key} = %s")
-        values.append(value)
-    values.append(item_id)
-    cursor.execute(
-        f"UPDATE items SET {', '.join(fields)} WHERE id = %s", values
-    )
-    conn.commit()
+    cursor = conn.cursor(dictionary=True)
+    cursor.execute(f"SELECT * FROM items WHERE title LIKE '%{q}%' OR description LIKE '%{q}%' ORDER BY created_at DESC")
+    results = cursor.fetchall()
     cursor.close()
     conn.close()
+    return results
 
-    return get_item_by_id(item_id)
 
+# ---------- Admin ----------
+
+@app.get("/admin", response_class=HTMLResponse)
+def admin_page():
+    conn = get_db()
+    cursor = conn.cursor(dictionary=True)
+    cursor.execute("SELECT * FROM items ORDER BY created_at DESC")
+    items = cursor.fetchall()
+    cursor.close()
+    conn.close()
+    html = "<html><head><title>Admin - Items</title></head><body>"
+    html += "<h1>Marketplace Admin Panel</h1>"
+    for item in items:
+        html += f"<div class='item'><h3>{item['title']}</h3><p>{item['description']}</p><span>Seller: {item['seller_name']}</span></div>"
+    html += "</body></html>"
+    return HTMLResponse(content=html)
+
+
+# ---------- Delete item (no auth) ----------
 
 @app.delete("/items/{item_id}")
 def delete_item(item_id: int):
