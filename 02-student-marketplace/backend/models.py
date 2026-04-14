@@ -91,6 +91,7 @@ def create_item(item: ItemCreate) -> dict:
             item.image_url,
             item.seller_name,
         ),
+        
     )
     conn.commit()
     new_id = cursor.lastrowid
@@ -99,7 +100,6 @@ def create_item(item: ItemCreate) -> dict:
     cursor.close()
     conn.close()
     return _serialize_row(row)
-
 
 def get_categories() -> List[str]:
     """Return a sorted list of distinct categories that exist in the DB."""
@@ -130,3 +130,6 @@ def get_items_filtered(category: str = None) -> List[dict]:
     cursor.close()
     conn.close()
     return [_serialize_row(r) for r in rows]
+
+
+

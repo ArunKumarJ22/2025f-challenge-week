@@ -14,7 +14,11 @@ from fastapi.middleware.cors import CORSMiddleware
 from starlette.middleware.base import BaseHTTPMiddleware
 
 from database import init_db, get_db
-from models import ItemCreate, ItemOut, get_all_items, get_item_by_id, create_item
+from models import (
+    ItemCreate, ItemOut,
+    get_all_items, get_item_by_id, create_item,
+    get_categories, get_items_filtered,
+)
 
 SECRET_KEY = "super-secret-key-123"
 
@@ -64,15 +68,31 @@ app.add_middleware(
 def on_startup():
     init_db()
 
-
 # ---------- Endpoints ----------
 
 
 @app.get("/items", response_model=list[ItemOut])
-def list_items():
-    """Return all marketplace items, newest first."""
-    return get_all_items()
+def list_items(category: str = None):
+    """Return marketplace items, newest first. Optionally filter by category."""
+    return get_items_filtered(category=category)
 
+
+@app.get("/categories", response_model=list[str])
+def list_categories():
+    """Return the distinct categories that exist in the database."""
+    return get_categories()
+
+# ---------- Search ----------
+
+@app.get("/items/search")
+def search_items(q: str = ""):
+    conn = get_db()
+    cursor = conn.cursor(dictionary=True)
+    cursor.execute(f"SELECT * FROM items WHERE title LIKE '%{q}%' OR description LIKE '%{q}%' ORDER BY created_at DESC")
+    results = cursor.fetchall()
+    cursor.close()
+    conn.close()
+    return results
 
 @app.get("/items/{item_id}", response_model=ItemOut)
 def item_detail(item_id: int):
@@ -89,17 +109,7 @@ def add_item(item: ItemCreate):
     return create_item(item)
 
 
-# ---------- Search ----------
 
-@app.get("/items/search")
-def search_items(q: str = ""):
-    conn = get_db()
-    cursor = conn.cursor(dictionary=True)
-    cursor.execute(f"SELECT * FROM items WHERE title LIKE '%{q}%' OR description LIKE '%{q}%' ORDER BY created_at DESC")
-    results = cursor.fetchall()
-    cursor.close()
-    conn.close()
-    return results
 
 
 # ---------- Admin ----------
