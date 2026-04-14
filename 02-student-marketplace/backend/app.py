@@ -9,9 +9,12 @@ import logging
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.exceptions import RequestValidationError
 <<<<<<< HEAD
+<<<<<<< HEAD
 from fastapi.responses import HTMLResponse, JSONResponse
 =======
 <<<<<<< HEAD
+=======
+>>>>>>> 5ebb916 (GET /categories (DISTINCT))
 from fastapi.responses import JSONResponse
 from fastapi.responses import HTMLResponse
 =======
@@ -31,12 +34,33 @@ app = FastAPI(
     description="Buy and sell second-hand items on campus.",
     version="0.2.0-secure",
 )
+<<<<<<< HEAD
 
 <<<<<<< HEAD
 # ---------------------------
 #  CORS (FIXED)
 # ---------------------------
 =======
+=======
+@app.exception_handler(RequestValidationError)
+async def validation_exception_handler(request: Request, exc: RequestValidationError):
+    """Convert Pydantic validation errors into a clean 400 with field-level messages."""
+    errors = {}
+    for error in exc.errors():
+        # error["loc"] is e.g. ("body", "price") — we want just "price"
+        field = error["loc"][-1] if error["loc"] else "general"
+        msg = error["msg"]
+        # Make messages friendlier
+        if "greater than 0" in msg or "gt" in msg:
+            msg = "Must be greater than 0"
+        elif "ensure this value has at least" in msg or "min_length" in msg:
+            msg = "This field is required"
+        elif "field required" in msg or msg == "missing":
+            msg = "This field is required"
+        errors[str(field)] = msg
+    return JSONResponse(status_code=400, content={"errors": errors})
+
+>>>>>>> 5ebb916 (GET /categories (DISTINCT))
 class PoweredByMiddleware(BaseHTTPMiddleware):
     async def dispatch(self, request, call_next):
         response = await call_next(request)
@@ -248,6 +272,7 @@ def delete_item(item_id: int):
 
 @app.patch("/items/{item_id}", response_model=ItemOut)
 def update_item(item_id: int, request_body: dict):
+<<<<<<< HEAD
     conn = None
     cursor = None
     try:
@@ -347,6 +372,13 @@ def admin_page():
 @app.get("/admin", response_class=HTMLResponse)
 def admin_page():
 >>>>>>> b376abb (| SMKT-S017 | [API] Combine sort + category filter |)
+=======
+    """Partially update an item (e.g. mark as sold)."""
+    item = get_item_by_id(item_id)
+    if item is None:
+        raise HTTPException(status_code=404, detail="Item not found")
+
+>>>>>>> 5ebb916 (GET /categories (DISTINCT))
     conn = get_db()
     cursor = conn.cursor(dictionary=True)
     cursor.execute("SELECT * FROM items ORDER BY created_at DESC")
@@ -354,6 +386,9 @@ def admin_page():
     cursor.close()
     conn.close()
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> 5ebb916 (GET /categories (DISTINCT))
     # Return the updated item so test_mark_as_sold can assert is_sold == True
     return get_item_by_id(item_id)
 
