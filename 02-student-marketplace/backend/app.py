@@ -10,7 +10,7 @@ from fastapi import FastAPI, HTTPException, Request
 from fastapi.responses import HTMLResponse
 from fastapi.middleware.cors import CORSMiddleware
 from starlette.middleware.base import BaseHTTPMiddleware
-
+from typing import Optional
 from database import init_db, get_db
 from models import ItemCreate, ItemOut, get_all_items, get_item_by_id, create_item
 
@@ -51,9 +51,9 @@ def on_startup():
 
 
 @app.get("/items", response_model=list[ItemOut])
-def list_items():
+def list_items(sort: Optional[str] = None, category: Optional[str] = None):
     """Return all marketplace items, newest first."""
-    return get_all_items()
+    return get_all_items(sort=sort, category=category)
 
 
 @app.get("/items/{item_id}", response_model=ItemOut)
