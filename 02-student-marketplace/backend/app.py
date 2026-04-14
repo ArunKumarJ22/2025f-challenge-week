@@ -7,6 +7,8 @@ Run with:
 
 import logging
 from fastapi import FastAPI, HTTPException, Request
+from fastapi.exceptions import RequestValidationError
+from fastapi.responses import JSONResponse
 from fastapi.responses import HTMLResponse
 from fastapi.middleware.cors import CORSMiddleware
 from starlette.middleware.base import BaseHTTPMiddleware
@@ -21,7 +23,23 @@ app = FastAPI(
     description="Buy and sell second-hand items on campus.",
     version="0.1.0",
 )
-
+@app.exception_handler(RequestValidationError)
+async def validation_exception_handler(request: Request, exc: RequestValidationError):
+    """Convert Pydantic validation errors into a clean 400 with field-level messages."""
+    errors = {}
+    for error in exc.errors():
+        # error["loc"] is e.g. ("body", "price") — we want just "price"
+        field = error["loc"][-1] if error["loc"] else "general"
+        msg = error["msg"]
+        # Make messages friendlier
+        if "greater than 0" in msg or "gt" in msg:
+            msg = "Must be greater than 0"
+        elif "ensure this value has at least" in msg or "min_length" in msg:
+            msg = "This field is required"
+        elif "field required" in msg or msg == "missing":
+            msg = "This field is required"
+        errors[str(field)] = msg
+    return JSONResponse(status_code=400, content={"errors": errors})
 
 class PoweredByMiddleware(BaseHTTPMiddleware):
     async def dispatch(self, request, call_next):
@@ -116,8 +134,13 @@ def delete_item(item_id: int):
 
 
 
-@app.patch("/items/{item_id}")
+@app.patch("/items/{item_id}", response_model=ItemOut)
 def update_item(item_id: int, request_body: dict):
+    """Partially update an item (e.g. mark as sold)."""
+    item = get_item_by_id(item_id)
+    if item is None:
+        raise HTTPException(status_code=404, detail="Item not found")
+
     conn = get_db()
     cursor = conn.cursor()
     fields = []
@@ -130,7 +153,8 @@ def update_item(item_id: int, request_body: dict):
     conn.commit()
     cursor.close()
     conn.close()
-    return {"message": "Item updated"}
+    # Return the updated item so test_mark_as_sold can assert is_sold == True
+    return get_item_by_id(item_id)
 
 
 

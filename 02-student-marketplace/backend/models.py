@@ -99,3 +99,34 @@ def create_item(item: ItemCreate) -> dict:
     cursor.close()
     conn.close()
     return _serialize_row(row)
+
+
+def get_categories() -> List[str]:
+    """Return a sorted list of distinct categories that exist in the DB."""
+    conn = get_db()
+    cursor = conn.cursor()
+    cursor.execute("SELECT DISTINCT category FROM items ORDER BY category ASC")
+    rows = cursor.fetchall()
+    cursor.close()
+    conn.close()
+    # Each row is a tuple like ("Books",) — extract the first element
+    return [row[0] for row in rows]
+
+
+def get_items_filtered(category: str = None) -> List[dict]:
+    """Return items, optionally filtered by category, newest first."""
+    conn = get_db()
+    cursor = conn.cursor(dictionary=True)
+
+    if category:
+        cursor.execute(
+            "SELECT * FROM items WHERE category = %s ORDER BY created_at DESC",
+            (category,)
+        )
+    else:
+        cursor.execute("SELECT * FROM items ORDER BY created_at DESC")
+
+    rows = cursor.fetchall()
+    cursor.close()
+    conn.close()
+    return [_serialize_row(r) for r in rows]
