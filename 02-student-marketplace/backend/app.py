@@ -25,11 +25,7 @@ logging.basicConfig(level=logging.INFO)
 app = FastAPI(
     title="Student Marketplace API",
     description="Buy and sell second-hand items on campus.",
-<<<<<<< HEAD
-    version="0.2.0-secure",
-=======
     version="0.1.0-secure",
->>>>>>> 655f059 (finish the core 1-15)
 )
 @app.exception_handler(RequestValidationError)
 async def validation_exception_handler(request: Request, exc: RequestValidationError):
