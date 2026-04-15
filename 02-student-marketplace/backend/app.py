@@ -1,5 +1,5 @@
 """
-Student Marketplace — FastAPI backend.
+Student Marketplace — FastAPI backend (SECURED VERSION).
 
 Run with:
     uvicorn app:app --reload --port 5000
@@ -11,7 +11,7 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 from fastapi.responses import HTMLResponse
 from fastapi.middleware.cors import CORSMiddleware
-from starlette.middleware.base import BaseHTTPMiddleware
+from typing import Optional
 
 from database import init_db, get_db
 from models import (
@@ -20,12 +20,12 @@ from models import (
     get_categories, get_items_filtered,
 )
 
-SECRET_KEY = "super-secret-key-123"
+logging.basicConfig(level=logging.INFO)
 
 app = FastAPI(
     title="Student Marketplace API",
     description="Buy and sell second-hand items on campus.",
-    version="0.1.0",
+    version="0.2.0-secure",
 )
 @app.exception_handler(RequestValidationError)
 async def validation_exception_handler(request: Request, exc: RequestValidationError):
@@ -57,13 +57,44 @@ app.add_middleware(PoweredByMiddleware)
 # Allow all origins so the Android / iOS emulators can reach the server.
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=["https://yourfrontend.com"],  # change to your frontend
     allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_methods=["GET", "POST", "PATCH", "DELETE"],
+    allow_headers=["Authorization", "Content-Type"],
 )
 
+# ---------------------------
+# GLOBAL EXCEPTION HANDLER (CWE-209 FIX)
+# ---------------------------
+@app.exception_handler(Exception)
+async def global_exception_handler(request: Request, exc: Exception):
+    logging.error(f"Unhandled error: {exc}", exc_info=True)
+    return JSONResponse(
+        status_code=500,
+        content={"error": "Internal server error"},
+    )
 
+# ---------------------------
+# VALIDATION HANDLER
+# ---------------------------
+@app.exception_handler(RequestValidationError)
+async def validation_exception_handler(request: Request, exc: RequestValidationError):
+    errors = {}
+    for error in exc.errors():
+        field = str(error["loc"][-1]) if error["loc"] else "general"
+        msg = error["msg"]
+        if "greater than 0" in msg:
+            msg = "Must be greater than 0"
+        elif "min_length" in msg or "ensure this value has at least" in msg:
+            msg = "This field is required"
+        elif "missing" in msg or "field required" in msg:
+            msg = "This field is required"
+        errors[field] = msg
+    return JSONResponse(status_code=400, content={"errors": errors})
+
+# ---------------------------
+#  STARTUP
+# ---------------------------
 @app.on_event("startup")
 def on_startup():
     init_db()
@@ -96,11 +127,16 @@ def search_items(q: str = ""):
 
 @app.get("/items/{item_id}", response_model=ItemOut)
 def item_detail(item_id: int):
-    """Return a single item by its id."""
-    item = get_item_by_id(item_id)
-    if item is None:
-        raise HTTPException(status_code=404, detail="Item not found")
-    return item
+    try:
+        item = get_item_by_id(item_id)
+        if item is None:
+            raise HTTPException(status_code=404, detail="Item not found")
+        return item
+    except HTTPException:
+        raise
+    except Exception as e:
+        logging.error(f"Error fetching item: {e}")
+        raise HTTPException(status_code=500, detail="Failed to fetch item")
 
 
 @app.post("/items", response_model=ItemOut, status_code=201)
@@ -111,36 +147,69 @@ def add_item(item: ItemCreate):
 
 
 
+ALLOWED_FIELDS = {"title", "description", "price", "category", "sold"}
 
-# ---------- Admin ----------
+@app.patch("/items/{item_id}", response_model=ItemOut)
+def update_item(item_id: int, request_body: dict):
+    conn = None
+    cursor = None
+    try:
+        if get_item_by_id(item_id) is None:
+            raise HTTPException(status_code=404, detail="Item not found")
 
-@app.get("/admin", response_class=HTMLResponse)
-def admin_page():
-    conn = get_db()
-    cursor = conn.cursor(dictionary=True)
-    cursor.execute("SELECT * FROM items ORDER BY created_at DESC")
-    items = cursor.fetchall()
-    cursor.close()
-    conn.close()
-    html = "<html><head><title>Admin - Items</title></head><body>"
-    html += "<h1>Marketplace Admin Panel</h1>"
-    for item in items:
-        html += f"<div class='item'><h3>{item['title']}</h3><p>{item['description']}</p><span>Seller: {item['seller_name']}</span></div>"
-    html += "</body></html>"
-    return HTMLResponse(content=html)
+        fields = []
+        values = []
 
+        for key, value in request_body.items():
+            if key not in ALLOWED_FIELDS:
+                raise HTTPException(status_code=400, detail=f"Invalid field: {key}")
+            fields.append(f"{key} = %s")
+            values.append(value)
 
-# ---------- Delete item (no auth) ----------
+        if not fields:
+            raise HTTPException(status_code=400, detail="No valid fields provided")
+
+        values.append(item_id)
+
+        conn = get_db()
+        cursor = conn.cursor()
+        cursor.execute(
+            f"UPDATE items SET {', '.join(fields)} WHERE id = %s", values
+        )
+        conn.commit()
+
+        return get_item_by_id(item_id)
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logging.error(f"Update error: {e}")
+        raise HTTPException(status_code=500, detail="Failed to update item")
+    finally:
+        if cursor:
+            cursor.close()
+        if conn:
+            conn.close()
+
 
 @app.delete("/items/{item_id}")
 def delete_item(item_id: int):
-    conn = get_db()
-    cursor = conn.cursor()
-    cursor.execute("DELETE FROM items WHERE id = %s", (item_id,))
-    conn.commit()
-    cursor.close()
-    conn.close()
-    return {"message": "Item deleted"}
+    conn = None
+    cursor = None
+    try:
+        conn = get_db()
+        cursor = conn.cursor()
+        cursor.execute("DELETE FROM items WHERE id = %s", (item_id,))
+        conn.commit()
+        return {"message": "Item deleted"}
+    except Exception as e:
+        logging.error(f"Delete failed: {e}")
+        raise HTTPException(status_code=500, detail="Failed to delete item")
+    finally:
+        if cursor:
+            cursor.close()
+        if conn:
+            conn.close()
 
 
 
@@ -170,7 +239,11 @@ def update_item(item_id: int, request_body: dict):
 
 @app.post("/sellers/register")
 def register_seller(data: dict):
-    name = data.get("name", "")
-    email = data.get("email", "")
-    logging.info(f"New seller registered: {name} ({email})")
-    return {"message": f"Seller {name} registered"}
+    try:
+        name = data.get("name", "")
+        email = data.get("email", "")
+        logging.info(f"New seller registered: {name} ({email})")
+        return {"message": f"Seller {name} registered"}
+    except Exception as e:
+        logging.error(f"Registration error: {e}")
+        raise HTTPException(status_code=500, detail="Registration failed")

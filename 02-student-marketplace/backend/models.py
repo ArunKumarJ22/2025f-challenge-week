@@ -49,12 +49,35 @@ def _serialize_row(row) -> dict:
             d[key] = value.isoformat()
     return d
 
+SORT_OPTIONS = {
+    "price_asc":  "price ASC",
+    "price_desc": "price DESC",
+    "date_asc":   "created_at ASC",
+    "date_desc":  "created_at DESC",
+}
 
-def get_all_items() -> List[dict]:
-    """Return every item, newest first."""
+def get_all_items(sort: Optional[str] = None, category: Optional[str] = None, q: Optional[str] = None) -> List[dict]:
+    """Return items — optionally filtered by category, searched by keyword, sorted."""
     conn = get_db()
     cursor = conn.cursor(dictionary=True)
-    cursor.execute("SELECT * FROM items ORDER BY created_at DESC")
+
+    order = SORT_OPTIONS.get(sort, "created_at DESC")
+
+    conditions = []
+    params = []
+
+    if category:
+        conditions.append("category = %s")
+        params.append(category)
+
+    if q:
+        conditions.append("(title LIKE %s OR description LIKE %s)")
+        params.append(f"%{q}%")
+        params.append(f"%{q}%")
+
+    where = ("WHERE " + " AND ".join(conditions)) if conditions else ""
+
+    cursor.execute(f"SELECT * FROM items {where} ORDER BY {order}", params)
     rows = cursor.fetchall()
     cursor.close()
     conn.close()
