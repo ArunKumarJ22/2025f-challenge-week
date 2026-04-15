@@ -7,10 +7,12 @@ Run with:
 
 import logging
 from fastapi import FastAPI, HTTPException, Request
-from fastapi.responses import HTMLResponse
+from fastapi.exceptions import RequestValidationError
+from fastapi.responses import HTMLResponse, JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 from starlette.middleware.base import BaseHTTPMiddleware
 from typing import Optional
+
 from database import init_db, get_db
 from models import ItemCreate, ItemOut, get_all_items, get_item_by_id, create_item
 
@@ -32,7 +34,6 @@ class PoweredByMiddleware(BaseHTTPMiddleware):
 
 app.add_middleware(PoweredByMiddleware)
 
-# Allow all origins so the Android / iOS emulators can reach the server.
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -42,18 +43,55 @@ app.add_middleware(
 )
 
 
+@app.exception_handler(RequestValidationError)
+async def validation_exception_handler(request: Request, exc: RequestValidationError):
+    """Return clean 400 with field-level error messages instead of 422."""
+    errors = {}
+    for error in exc.errors():
+        field = str(error["loc"][-1]) if error["loc"] else "general"
+        msg = error["msg"]
+        if "greater than 0" in msg or "gt" in msg:
+            msg = "Must be greater than 0"
+        elif "min_length" in msg or "ensure this value has at least" in msg:
+            msg = "This field is required"
+        elif "missing" in msg or "field required" in msg:
+            msg = "This field is required"
+        errors[field] = msg
+    return JSONResponse(status_code=400, content={"errors": errors})
+
+
 @app.on_event("startup")
 def on_startup():
     init_db()
 
 
-# ---------- Endpoints ----------
-
 
 @app.get("/items", response_model=list[ItemOut])
-def list_items(sort: Optional[str] = None, category: Optional[str] = None):
-    """Return all marketplace items, newest first."""
-    return get_all_items(sort=sort, category=category)
+def list_items(
+    sort: Optional[str] = None,
+    category: Optional[str] = None,
+    q: Optional[str] = None,       # S025 — keyword search
+):
+    """Return items — filter by category, search by keyword, sort. All combinable."""
+    return get_all_items(sort=sort, category=category, q=q)
+
+
+@app.get("/categories", response_model=list[str])
+def list_categories():
+    """Return all distinct categories that exist in the DB."""
+    conn = get_db()
+    cursor = conn.cursor()
+    cursor.execute("SELECT DISTINCT category FROM items ORDER BY category")
+    rows = cursor.fetchall()
+    cursor.close()
+    conn.close()
+    return [row[0] for row in rows]
+
+
+@app.get("/items/search", response_model=list[ItemOut])
+def search_items(q: str = ""):
+    """Dedicated search endpoint — proxies to list_items with q param."""
+    return get_all_items(q=q)
 
 
 @app.get("/items/{item_id}", response_model=ItemOut)
@@ -71,38 +109,30 @@ def add_item(item: ItemCreate):
     return create_item(item)
 
 
-# ---------- Search ----------
+@app.patch("/items/{item_id}", response_model=ItemOut)
+def update_item(item_id: int, request_body: dict):
+    """Partially update an item — e.g. mark as sold. Returns the full updated item."""
+    # 404 check first
+    if get_item_by_id(item_id) is None:
+        raise HTTPException(status_code=404, detail="Item not found")
 
-@app.get("/items/search")
-def search_items(q: str = ""):
     conn = get_db()
-    cursor = conn.cursor(dictionary=True)
-    cursor.execute(f"SELECT * FROM items WHERE title LIKE '%{q}%' OR description LIKE '%{q}%' ORDER BY created_at DESC")
-    results = cursor.fetchall()
+    cursor = conn.cursor()
+    fields = []
+    values = []
+    for key, value in request_body.items():
+        fields.append(f"{key} = %s")
+        values.append(value)
+    values.append(item_id)
+    cursor.execute(
+        f"UPDATE items SET {', '.join(fields)} WHERE id = %s", values
+    )
+    conn.commit()
     cursor.close()
     conn.close()
-    return results
 
+    return get_item_by_id(item_id)
 
-# ---------- Admin ----------
-
-@app.get("/admin", response_class=HTMLResponse)
-def admin_page():
-    conn = get_db()
-    cursor = conn.cursor(dictionary=True)
-    cursor.execute("SELECT * FROM items ORDER BY created_at DESC")
-    items = cursor.fetchall()
-    cursor.close()
-    conn.close()
-    html = "<html><head><title>Admin - Items</title></head><body>"
-    html += "<h1>Marketplace Admin Panel</h1>"
-    for item in items:
-        html += f"<div class='item'><h3>{item['title']}</h3><p>{item['description']}</p><span>Seller: {item['seller_name']}</span></div>"
-    html += "</body></html>"
-    return HTMLResponse(content=html)
-
-
-# ---------- Delete item (no auth) ----------
 
 @app.delete("/items/{item_id}")
 def delete_item(item_id: int):
@@ -115,23 +145,22 @@ def delete_item(item_id: int):
     return {"message": "Item deleted"}
 
 
-
-@app.patch("/items/{item_id}")
-def update_item(item_id: int, request_body: dict):
+@app.get("/admin", response_class=HTMLResponse)
+def admin_page():
     conn = get_db()
-    cursor = conn.cursor()
-    fields = []
-    values = []
-    for key, value in request_body.items():
-        fields.append(f"{key} = %s")
-        values.append(value)
-    values.append(item_id)
-    cursor.execute(f"UPDATE items SET {', '.join(fields)} WHERE id = %s", values)
-    conn.commit()
+    cursor = conn.cursor(dictionary=True)
+    cursor.execute("SELECT * FROM items ORDER BY created_at DESC")
+    items = cursor.fetchall()
     cursor.close()
     conn.close()
-    return {"message": "Item updated"}
-
+    html = "<html><head><title>Admin</title></head><body>"
+    html += "<h1>Marketplace Admin Panel</h1>"
+    for item in items:
+        html += (f"<div><h3>{item['title']}</h3>"
+                 f"<p>{item['description']}</p>"
+                 f"<span>Seller: {item['seller_name']}</span></div>")
+    html += "</body></html>"
+    return HTMLResponse(content=html)
 
 
 @app.post("/sellers/register")
