@@ -56,15 +56,28 @@ SORT_OPTIONS = {
     "date_desc":  "created_at DESC",
 }
 
-def get_all_items(sort: Optional[str] = None, category: Optional[str] = None) -> List[dict]:
-    """Return every item, newest first."""
+def get_all_items(sort: Optional[str] = None, category: Optional[str] = None, q: Optional[str] = None) -> List[dict]:
+    """Return items — optionally filtered by category, searched by keyword, sorted."""
     conn = get_db()
     cursor = conn.cursor(dictionary=True)
+
     order = SORT_OPTIONS.get(sort, "created_at DESC")
+
+    conditions = []
+    params = []
+
     if category:
-        cursor.execute(f"SELECT * FROM items WHERE category = %s ORDER BY {order}", (category,))
-    else:
-        cursor.execute(f"SELECT * FROM items ORDER BY {order}")
+        conditions.append("category = %s")
+        params.append(category)
+
+    if q:
+        conditions.append("(title LIKE %s OR description LIKE %s)")
+        params.append(f"%{q}%")
+        params.append(f"%{q}%")
+
+    where = ("WHERE " + " AND ".join(conditions)) if conditions else ""
+
+    cursor.execute(f"SELECT * FROM items {where} ORDER BY {order}", params)
     rows = cursor.fetchall()
     cursor.close()
     conn.close()
