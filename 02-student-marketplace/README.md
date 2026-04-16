@@ -297,7 +297,7 @@ Each TODO includes **acceptance criteria** so you know when it is done.
 
 | Code | TODO |
 |------|------|
-| SMKT-S001 | [API] GET /items/:id returns all fields |
+| SMKT-S001 | [API] GET /items/:id returns all fields |c    
 | SMKT-S002 | [Mobile] Detail screen: call API, populate fields |
 | SMKT-S003 | [Mobile] Format price + relative date |
 | SMKT-S004 | [Mobile] SOLD overlay if is_sold=true |
