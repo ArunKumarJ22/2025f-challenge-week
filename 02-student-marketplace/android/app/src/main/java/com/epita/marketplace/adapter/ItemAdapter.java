@@ -82,4 +82,11 @@ public class ItemAdapter extends RecyclerView.Adapter<ItemAdapter.ItemViewHolder
             soldBadge = itemView.findViewById(R.id.item_sold_badge);
         }
     }
+
+    public void appendItems(List<Item> more) {
+        int start = items.size();
+        items.addAll(more);
+        notifyItemRangeInserted(start, more.size());
+    }
+
 }

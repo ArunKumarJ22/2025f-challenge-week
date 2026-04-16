@@ -1,99 +1,150 @@
 <?xml version="1.0" encoding="utf-8"?>
-<ScrollView
+<!-- SMKT-S001: Item Detail Screen layout -->
+<RelativeLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
-    <LinearLayout
+    <!-- Scrollable content -->
+    <ScrollView
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="vertical"
-        android:padding="16dp">
+        android:layout_height="match_parent"
+        android:fillViewport="true">
 
-        <!-- Image placeholder -->
-        <View
-            android:id="@+id/detail_image_placeholder"
-            android:layout_width="match_parent"
-            android:layout_height="200dp"
-            android:background="#E0E0E0" />
-
-        <!-- SOLD badge (hidden when item is available) -->
-        <TextView
-            android:id="@+id/detail_sold_badge"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="12dp"
-            android:background="#B71C1C"
-            android:paddingHorizontal="12dp"
-            android:paddingVertical="4dp"
-            android:text="SOLD"
-            android:textColor="#FFFFFF"
-            android:textStyle="bold"
-            android:textSize="14sp"
-            android:visibility="gone" />
-
-        <TextView
-            android:id="@+id/detail_title"
+        <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="16dp"
-            android:text="Item Title"
-            android:textSize="24sp"
-            android:textStyle="bold" />
+            android:orientation="vertical"
+            android:padding="16dp">
 
-        <TextView
-            android:id="@+id/detail_price"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
-            android:text="0.00 EUR"
-            android:textSize="20sp"
-            android:textColor="#1B5E20"
-            android:textStyle="bold" />
+            <!-- SMKT-S001: Image placeholder -->
+            <!-- SMKT-S022: SOLD overlay -->
+            <FrameLayout
+                android:layout_width="match_parent"
+                android:layout_height="200dp">
 
-        <TextView
-            android:id="@+id/detail_category"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
-            android:text="Category"
-            android:textSize="14sp"
-            android:textColor="#757575" />
+                <View
+                    android:id="@+id/detail_image_placeholder"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:background="#E0E0E0" />
 
-        <TextView
-            android:id="@+id/detail_description"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="16dp"
-            android:text="Description goes here..."
-            android:textSize="16sp" />
+                <!-- SMKT-S022: SOLD overlay (dark transparent layer) -->
+                <View
+                    android:id="@+id/detailSoldOverlay"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:background="#AA000000"
+                    android:visibility="gone" />
 
-        <TextView
-            android:id="@+id/detail_seller"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="16dp"
-            android:text="Seller: ..."
-            android:textSize="14sp"
-            android:textColor="#9E9E9E" />
+            </FrameLayout>
 
-        <TextView
-            android:id="@+id/detail_date"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="4dp"
-            android:text="Posted: ..."
-            android:textSize="14sp"
-            android:textColor="#9E9E9E" />
 
-        <!-- Mark as sold button -->
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/btn_mark_sold"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="24dp"
-            android:text="Mark as sold" />
+            <!-- SMKT-S004: SOLD badge -->
+            <TextView
+                android:id="@+id/detailSoldBadge"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="SOLD"
+                android:textColor="#FFFFFF"
+                android:background="#D32F2F"
+                android:padding="6dp"
+                android:layout_marginTop="8dp"
+                android:visibility="gone"
+                android:textStyle="bold" />
 
-    </LinearLayout>
+            <!-- SMKT-S001: Item fields -->
+            <TextView
+                android:id="@+id/detail_title"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:text="Item Title"
+                android:textSize="24sp"
+                android:textStyle="bold" />
 
-</ScrollView>
+            <TextView
+                android:id="@+id/detail_price"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:text="0.00 EUR"
+                android:textSize="20sp"
+                android:textColor="#1B5E20"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/detail_category"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:text="Category"
+                android:textSize="14sp"
+                android:textColor="#757575" />
+
+            <TextView
+                android:id="@+id/detail_description"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:text="Description goes here..."
+                android:textSize="16sp" />
+
+            <TextView
+                android:id="@+id/detail_seller"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:text="Seller: ..."
+                android:textSize="14sp"
+                android:textColor="#9E9E9E" />
+
+            <TextView
+                android:id="@+id/detail_date"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                android:text="Posted: ..."
+                android:textSize="14sp"
+                android:textColor="#9E9E9E" />
+
+            <!-- SMKT-S021: Mark as Sold button -->
+            <!-- SMKT-S024: Unmark as Available (same button reused) -->
+            <Button
+                android:id="@+id/btnMarkAsSold"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Mark as Sold"
+                android:layout_marginTop="24dp"
+                android:backgroundTint="#6200EE"
+                android:textColor="@android:color/white"
+                android:padding="12dp" />
+
+            <Button
+                android:id="@+id/btn_contact_seller"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Contact Seller"
+                android:layout_marginTop="12dp"/>
+            <Button
+                android:id="@+id/btn_share_item"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Share Item"
+                android:layout_marginTop="12dp"/>
+
+
+        </LinearLayout>
+    </ScrollView>
+
+    <!-- SMKT-S005: Loading spinner for API call -->
+    <ProgressBar
+        android:id="@+id/detailLoading"
+        style="?android:attr/progressBarStyleLarge"
+        android:indeterminateTint="#FF0000"
+        android:layout_width="80dp"
+        android:layout_height="80dp"
+        android:layout_centerInParent="true"
+        android:visibility="visible" />
+
+</RelativeLayout>

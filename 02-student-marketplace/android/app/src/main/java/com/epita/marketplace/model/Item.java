@@ -1,7 +1,11 @@
 package com.epita.marketplace.model;
 
+import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Plain Java object representing a marketplace item.
@@ -32,9 +36,35 @@ public class Item {
         item.imageUrl = json.optString("image_url", null);
         item.sellerName = json.getString("seller_name");
         item.createdAt = json.getString("created_at");
-        item.isSold = json.getBoolean("is_sold");
+        boolean isSold = json.getInt("is_sold") == 1;
+
+
+        // Handle both boolean and integer (0/1) for is_sold
+//        Object isSoldObj = json.get("is_sold");
+//        if (isSoldObj instanceof Integer) {
+//            item.isSold = (Integer) isSoldObj != 0;
+//        } else if (isSoldObj instanceof Boolean) {
+//            item.isSold = (Boolean) isSoldObj;
+//        } else {
+//            item.isSold = false;
+//        }
+
         return item;
     }
+
+    public static List<Item> fromJsonArray(JSONArray array) {
+        List<Item> items = new ArrayList<>();
+        for (int i = 0; i < array.length(); i++) {
+            try {
+                JSONObject obj = array.getJSONObject(i);
+                items.add(Item.fromJson(obj));
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+        return items;
+    }
+
 
     // ---- Getters & setters ----
 
