@@ -49,40 +49,41 @@ def _serialize_row(row) -> dict:
             d[key] = value.isoformat()
     return d
 
-SORT_OPTIONS = {
+SORT_MAP = {
     "price_asc":  "price ASC",
     "price_desc": "price DESC",
     "date_asc":   "created_at ASC",
     "date_desc":  "created_at DESC",
 }
 
-def get_all_items(sort: Optional[str] = None, category: Optional[str] = None, q: Optional[str] = None) -> List[dict]:
-    """Return items — optionally filtered by category, searched by keyword, sorted."""
+def get_all_items(category: str = None, sort: str = None, q: str = None) -> List[dict]:
+    """Return items, optionally filtered by category and/or sorted."""
     conn = get_db()
     cursor = conn.cursor(dictionary=True)
 
-    order = SORT_OPTIONS.get(sort, "created_at DESC")
+    where = "WHERE 1=1"
+params = []
 
-    conditions = []
-    params = []
+if category:
+    where += " AND category = %s"
+    params.append(category)
 
-    if category:
-        conditions.append("category = %s")
-        params.append(category)
+# SAFE SEARCH FIX (only addition)
+if q:
+    where += " AND title LIKE %s"
+    params.append(f"%{q}%")
 
-    if q:
-        conditions.append("(title LIKE %s OR description LIKE %s)")
-        params.append(f"%{q}%")
-        params.append(f"%{q}%")
+    # Build ORDER BY clause — use whitelist, default to newest first
+    order = SORT_MAP.get(sort, "created_at DESC")
 
-    where = ("WHERE " + " AND ".join(conditions)) if conditions else ""
-
-    cursor.execute(f"SELECT * FROM items {where} ORDER BY {order}", params)
+    cursor.execute(
+        f"SELECT * FROM items {where} ORDER BY {order}",
+        params
+    )
     rows = cursor.fetchall()
     cursor.close()
     conn.close()
     return [_serialize_row(r) for r in rows]
-
 
 def get_item_by_id(item_id: int) -> Optional[dict]:
     """Return a single item or None."""
