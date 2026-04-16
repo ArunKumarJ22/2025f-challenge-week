@@ -5,6 +5,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
+import android.widget.ImageView;
 
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
@@ -14,6 +15,9 @@ import com.epita.marketplace.model.Item;
 
 import java.util.ArrayList;
 import java.util.List;
+
+import com.bumptech.glide.Glide;
+import com.bumptech.glide.load.resource.drawable.DrawableTransitionOptions;
 
 /**
  * RecyclerView adapter that displays a list of marketplace items as cards.
@@ -47,6 +51,7 @@ public class ItemAdapter extends RecyclerView.Adapter<ItemAdapter.ItemViewHolder
     @Override
     public void onBindViewHolder(@NonNull ItemViewHolder holder, int position) {
         Item item = items.get(position);
+
         holder.titleText.setText(item.getTitle());
         holder.priceText.setText(item.formattedPrice());
         holder.categoryText.setText(item.getCategory());
@@ -58,6 +63,19 @@ public class ItemAdapter extends RecyclerView.Adapter<ItemAdapter.ItemViewHolder
         } else {
             holder.soldBadge.setVisibility(View.GONE);
             holder.itemView.setAlpha(1.0f);
+        }
+
+        // IMAGE LOADING WITH GLIDE
+        if (item.getImageUrl() != null && !item.getImageUrl().isEmpty()) {
+            Glide.with(holder.itemView.getContext())
+                    .load(item.getImageUrl())
+                    .transition(DrawableTransitionOptions.withCrossFade())
+                    .placeholder(android.R.color.darker_gray)
+                    .error(android.R.color.darker_gray)
+                    .into(holder.imageView);
+        } else {
+            holder.imageView.setImageDrawable(null);
+            holder.imageView.setBackgroundColor(Color.parseColor("#E0E0E0"));
         }
 
         holder.itemView.setOnClickListener(v -> {
@@ -72,6 +90,7 @@ public class ItemAdapter extends RecyclerView.Adapter<ItemAdapter.ItemViewHolder
 
     static class ItemViewHolder extends RecyclerView.ViewHolder {
         TextView titleText, priceText, categoryText, sellerText, soldBadge;
+        ImageView imageView; // ✅added
 
         ItemViewHolder(@NonNull View itemView) {
             super(itemView);
@@ -80,6 +99,9 @@ public class ItemAdapter extends RecyclerView.Adapter<ItemAdapter.ItemViewHolder
             categoryText = itemView.findViewById(R.id.item_category);
             sellerText = itemView.findViewById(R.id.item_seller);
             soldBadge = itemView.findViewById(R.id.item_sold_badge);
+
+            //  bind image view
+            imageView = itemView.findViewById(R.id.item_image);
         }
     }
 
@@ -88,5 +110,4 @@ public class ItemAdapter extends RecyclerView.Adapter<ItemAdapter.ItemViewHolder
         items.addAll(more);
         notifyItemRangeInserted(start, more.size());
     }
-
 }

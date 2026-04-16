@@ -15,11 +15,15 @@ from fastapi.middleware.cors import CORSMiddleware
 from typing import Optional
 
 from database import init_db, get_db
+
 from models import (
     ItemCreate, ItemOut,
     get_all_items, get_item_by_id, create_item,
-    get_categories, get_items_filtered,
+    get_categories, get_items_filtered, get_items_paginated, get_similar_items,
 )
+
+
+
 
 logging.basicConfig(level=logging.INFO)
 
@@ -103,11 +107,16 @@ def on_startup():
 # ---------- Endpoints ----------
 
 
-@app.get("/items", response_model=list[ItemOut])
-def list_items(category: str = None):
-    """Return marketplace items, newest first. Optionally filter by category."""
-    return get_items_filtered(category=category)
-
+@app.get("/items")
+def list_items(
+    category: str = None,
+    q: str = None,
+    sort: str = None,
+    page: int = 1,
+    limit: int = 10
+):
+    """Return paginated items with optional filter, search, and sort."""
+    return get_items_paginated(category=category, q=q, sort=sort, page=page, limit=limit)
 
 @app.get("/categories", response_model=list[str])
 def list_categories():
@@ -125,6 +134,14 @@ def search_items(q: str = ""):
     cursor.close()
     conn.close()
     return results
+
+@app.get("/items/{item_id}/similar", response_model=list[ItemOut])
+def similar_items(item_id: int):
+    """Return up to 5 items in the same category."""
+    item = get_item_by_id(item_id)
+    if item is None:
+        raise HTTPException(status_code=404, detail="Item not found")
+    return get_similar_items(item_id, item["category"])
 
 @app.get("/items/{item_id}", response_model=ItemOut)
 def item_detail(item_id: int):

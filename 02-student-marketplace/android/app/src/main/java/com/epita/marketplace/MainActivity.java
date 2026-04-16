@@ -16,6 +16,7 @@ import android.widget.PopupMenu;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
+import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 
 import com.epita.marketplace.adapter.ItemAdapter;
 import com.epita.marketplace.api.ApiClient;
@@ -45,6 +46,7 @@ public class MainActivity extends AppCompatActivity implements ItemAdapter.OnIte
     private View sortButton;
     TextInputEditText searchInput;
     Handler searchHandler = new Handler();
+    private SwipeRefreshLayout swipeRefresh;
     Runnable searchRunnable;
 
     private int currentPage = 1;
@@ -56,7 +58,7 @@ public class MainActivity extends AppCompatActivity implements ItemAdapter.OnIte
     private String selectedCategory = null;
     private String selectedSort = "date_desc";
     private static final String PREFS_NAME = "MarketplacePrefs";
-
+    
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -73,6 +75,13 @@ public class MainActivity extends AppCompatActivity implements ItemAdapter.OnIte
         recyclerView.setAdapter(adapter);
 
         searchInput = findViewById(R.id.searchInput);
+
+        swipeRefresh.setOnRefreshListener(() -> {
+        resetPagination();
+        loadItems();
+        loadCategories();
+        swipeRefresh.setRefreshing(false);
+        });
 
         sortButton = findViewById(R.id.btn_sort);
         sortButton.setOnClickListener(this::showSortMenu);
