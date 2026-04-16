@@ -18,24 +18,28 @@
             android:textStyle="bold"
             android:layout_marginBottom="16dp" />
 
-        <!-- TODO: Read values, validate, and POST to /items -->
-
+        <!-- Title -->
         <com.google.android.material.textfield.TextInputLayout
+            android:id="@+id/layout_title"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginBottom="8dp"
-            android:hint="Title">
+            android:hint="Title"
+            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox">
             <com.google.android.material.textfield.TextInputEditText
                 android:id="@+id/create_title"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content" />
         </com.google.android.material.textfield.TextInputLayout>
 
+        <!-- Description -->
         <com.google.android.material.textfield.TextInputLayout
+            android:id="@+id/layout_description"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginBottom="8dp"
-            android:hint="Description">
+            android:hint="Description (optional)"
+            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox">
             <com.google.android.material.textfield.TextInputEditText
                 android:id="@+id/create_description"
                 android:layout_width="match_parent"
@@ -44,11 +48,14 @@
                 android:gravity="top" />
         </com.google.android.material.textfield.TextInputLayout>
 
+        <!-- Price -->
         <com.google.android.material.textfield.TextInputLayout
+            android:id="@+id/layout_price"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginBottom="8dp"
-            android:hint="Price (EUR)">
+            android:hint="Price (EUR)"
+            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox">
             <com.google.android.material.textfield.TextInputEditText
                 android:id="@+id/create_price"
                 android:layout_width="match_parent"
@@ -56,22 +63,31 @@
                 android:inputType="numberDecimal" />
         </com.google.android.material.textfield.TextInputLayout>
 
+        <!-- Category dropdown (S009) -->
         <com.google.android.material.textfield.TextInputLayout
+            android:id="@+id/layout_category"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginBottom="8dp"
-            android:hint="Category">
-            <com.google.android.material.textfield.TextInputEditText
+            android:hint="Category"
+            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox.ExposedDropdownMenu">
+            <AutoCompleteTextView
                 android:id="@+id/create_category"
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content" />
+                android:layout_height="wrap_content"
+                android:focusable="false"
+                android:inputType="none"
+                android:text="" />
         </com.google.android.material.textfield.TextInputLayout>
 
+        <!-- Seller name -->
         <com.google.android.material.textfield.TextInputLayout
+            android:id="@+id/layout_seller_name"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginBottom="8dp"
-            android:hint="Your Name">
+            android:hint="Your Name"
+            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox">
             <com.google.android.material.textfield.TextInputEditText
                 android:id="@+id/create_seller_name"
                 android:layout_width="match_parent"
@@ -83,7 +99,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="16dp"
-            android:text="Submit" />
+            android:text="Post Item" />
 
     </LinearLayout>
 

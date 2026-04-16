@@ -15,6 +15,8 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.epita.marketplace.adapter.ItemAdapter;
 import com.epita.marketplace.api.ApiClient;
 import com.epita.marketplace.model.Item;
+import com.google.android.material.chip.Chip;
+import com.google.android.material.chip.ChipGroup;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 
 import org.json.JSONArray;
@@ -23,16 +25,10 @@ import org.json.JSONObject;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * Main screen — displays a list of marketplace items fetched from the API.
- */
 public class MainActivity extends AppCompatActivity implements ItemAdapter.OnItemClickListener {
 
     private RecyclerView recyclerView;
     private ItemAdapter adapter;
-    private ChipGroup chipGroup;
-    private TextView emptyState;
-    private String selectedCategory = null;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -47,6 +43,8 @@ public class MainActivity extends AppCompatActivity implements ItemAdapter.OnIte
         emptyState = findViewById(R.id.empty_state);
         recyclerView.setAdapter(adapter);
 
+        chipGroup = findViewById(R.id.chip_group_categories);
+
         FloatingActionButton fab = findViewById(R.id.fab_create_item);
         fab.setOnClickListener(v -> {
             Intent intent = new Intent(this, CreateItemActivity.class);
@@ -54,70 +52,26 @@ public class MainActivity extends AppCompatActivity implements ItemAdapter.OnIte
         });
 
         loadItems();
-        loadCategories();
     }
-    private void loadCategories() {
-    new Thread(() -> {
-        try {
-            String json = ApiClient.get("/categories");
-            JSONArray array = new JSONArray(json);
-            List<String> cats = new ArrayList<>();
-            cats.add("All");
-            for (int i = 0; i < array.length(); i++) {
-                cats.add(array.getString(i));
-            }
-            runOnUiThread(() -> {
-                chipGroup.removeAllViews();
-                for (String cat : cats) {
-                    Chip chip = new Chip(this);
-                    chip.setText(cat);
-                    chip.setCheckable(true);
-                    chip.setChecked(cat.equals("All"));
-                    chipGroup.addView(chip);
-                }
-                chipGroup.setOnCheckedStateChangeListener((group, checkedIds) -> {
-                    if (checkedIds.isEmpty()) return;
-                    Chip active = findViewById(checkedIds.get(0));
-                    if (active == null) return;
-                    String label = active.getText().toString();
-                    selectedCategory = label.equals("All") ? null : label;
-                    loadItems();
-                });
-            });
-        } catch (Exception e) {
-            runOnUiThread(() ->
-                Toast.makeText(this, "Failed to load categories", Toast.LENGTH_SHORT).show());
-        }
-    }).start();
-}
 
     @Override
     protected void onResume() {
         super.onResume();
-        loadItems();
+        // Reload items with the current active filter when returning from detail/create
+        loadItems(activeCategory);
     }
 
-   private void loadItems() {
-    new Thread(() -> {
-        try {
-            String path = selectedCategory == null ? "/items" : "/items?category=" + selectedCategory;
-            String json = ApiClient.get(path);  
-            JSONArray array = new JSONArray(json);
-            List<Item> items = new ArrayList<>();
-            for (int i = 0; i < array.length(); i++) {
-                JSONObject obj = array.getJSONObject(i);
-                items.add(Item.fromJson(obj));
-            }
-            runOnUiThread(() -> {
-    adapter.setItems(items);
-    if (items.isEmpty()) {
-        recyclerView.setVisibility(View.GONE);
-        emptyState.setVisibility(View.VISIBLE);
-    } else {
-        recyclerView.setVisibility(View.VISIBLE);
-        emptyState.setVisibility(View.GONE);
-    }
-});
+    private void loadItems() {
+        new Thread(() -> {
+            try {
+                String json = ApiClient.get("/items");
+                JSONArray array = new JSONArray(json);
+                List<Item> items = new ArrayList<>();
+                for (int i = 0; i < array.length(); i++) {
+                    JSONObject obj = array.getJSONObject(i);
+                    items.add(Item.fromJson(obj));
+                }
+                runOnUiThread(() -> adapter.setItems(items));
             } catch (Exception e) {
                 runOnUiThread(() ->
                         Toast.makeText(this, "Failed to load items: " + e.getMessage(),
@@ -128,7 +82,6 @@ public class MainActivity extends AppCompatActivity implements ItemAdapter.OnIte
 
     @Override
     public void onItemClick(Item item) {
-        // TODO: Launch ItemDetailActivity with the item id
         Intent intent = new Intent(this, ItemDetailActivity.class);
         intent.putExtra("item_id", item.getId());
         startActivity(intent);

@@ -49,35 +49,12 @@ def _serialize_row(row) -> dict:
             d[key] = value.isoformat()
     return d
 
-SORT_OPTIONS = {
-    "price_asc":  "price ASC",
-    "price_desc": "price DESC",
-    "date_asc":   "created_at ASC",
-    "date_desc":  "created_at DESC",
-}
 
-def get_all_items(sort: Optional[str] = None, category: Optional[str] = None, q: Optional[str] = None) -> List[dict]:
-    """Return items — optionally filtered by category, searched by keyword, sorted."""
+def get_all_items() -> List[dict]:
+    """Return every item, newest first."""
     conn = get_db()
     cursor = conn.cursor(dictionary=True)
-
-    order = SORT_OPTIONS.get(sort, "created_at DESC")
-
-    conditions = []
-    params = []
-
-    if category:
-        conditions.append("category = %s")
-        params.append(category)
-
-    if q:
-        conditions.append("(title LIKE %s OR description LIKE %s)")
-        params.append(f"%{q}%")
-        params.append(f"%{q}%")
-
-    where = ("WHERE " + " AND ".join(conditions)) if conditions else ""
-
-    cursor.execute(f"SELECT * FROM items {where} ORDER BY {order}", params)
+    cursor.execute("SELECT * FROM items ORDER BY created_at DESC")
     rows = cursor.fetchall()
     cursor.close()
     conn.close()
@@ -122,3 +99,32 @@ def create_item(item: ItemCreate) -> dict:
     cursor.close()
     conn.close()
     return _serialize_row(row)
+def get_categories() -> List[str]:
+    """Return a sorted list of distinct categories that exist in the DB."""
+    conn = get_db()
+    cursor = conn.cursor()
+    cursor.execute("SELECT DISTINCT category FROM items ORDER BY category ASC")
+    rows = cursor.fetchall()
+    cursor.close()
+    conn.close()
+    # Each row is a tuple like ("Books",) — extract the first element
+    return [row[0] for row in rows]
+
+
+def get_items_filtered(category: str = None) -> List[dict]:
+    """Return items, optionally filtered by category, newest first."""
+    conn = get_db()
+    cursor = conn.cursor(dictionary=True)
+
+    if category:
+        cursor.execute(
+            "SELECT * FROM items WHERE category = %s ORDER BY created_at DESC",
+            (category,)
+        )
+    else:
+        cursor.execute("SELECT * FROM items ORDER BY created_at DESC")
+
+    rows = cursor.fetchall()
+    cursor.close()
+    conn.close()
+    return [_serialize_row(r) for r in rows]
