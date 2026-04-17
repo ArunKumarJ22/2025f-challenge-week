@@ -25,8 +25,8 @@ public class ApiClient {
         URL url = new URL(BASE_URL + path);
         HttpURLConnection conn = (HttpURLConnection) url.openConnection();
         conn.setRequestMethod("GET");
-        conn.setConnectTimeout(5000);
-        conn.setReadTimeout(5000);
+        conn.setConnectTimeout(8000);
+        conn.setReadTimeout(8000);
 
         int code = conn.getResponseCode();
         if (code != 200) {
@@ -54,8 +54,8 @@ public class ApiClient {
         conn.setRequestMethod("POST");
         conn.setRequestProperty("Content-Type", "application/json");
         conn.setDoOutput(true);
-        conn.setConnectTimeout(5000);
-        conn.setReadTimeout(5000);
+        conn.setConnectTimeout(8000);
+        conn.setReadTimeout(8000);
 
         OutputStream os = conn.getOutputStream();
         os.write(jsonBody.getBytes("UTF-8"));
