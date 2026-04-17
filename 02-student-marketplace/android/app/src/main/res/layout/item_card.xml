@@ -4,9 +4,9 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:layout_margin="4dp"
-    app:cardCornerRadius="8dp"
-    app:cardElevation="2dp">
+    android:layout_margin="6dp"
+    app:cardCornerRadius="10dp"
+    app:cardElevation="3dp">
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -14,13 +14,16 @@
         android:orientation="vertical"
         android:padding="12dp">
 
-        <!-- Image placeholder -->
-        <View
-            android:id="@+id/item_image_placeholder"
+        <!-- Item Image -->
+        <ImageView
+            android:id="@+id/item_image"
             android:layout_width="match_parent"
-            android:layout_height="120dp"
-            android:background="#E0E0E0" />
+            android:layout_height="140dp"
+            android:scaleType="centerCrop"
+            android:background="#E0E0E0"
+            android:contentDescription="Item image" />
 
+        <!-- Title -->
         <TextView
             android:id="@+id/item_title"
             android:layout_width="match_parent"
@@ -31,17 +34,12 @@
             android:maxLines="2"
             android:ellipsize="end" />
 
-        <ImageView
-            android:id="@+id/item_image"
-            android:layout_width="match_parent"
-            android:layout_height="150dp"
-            android:scaleType="centerCrop" />
-
+        <!-- Price + SOLD badge -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="horizontal"
-            android:layout_marginTop="4dp">
+            android:layout_marginTop="6dp">
 
             <TextView
                 android:id="@+id/item_price"
@@ -50,7 +48,8 @@
                 android:layout_weight="1"
                 android:textSize="18sp"
                 android:textColor="#1B5E20"
-                android:textStyle="bold" />
+                android:textStyle="bold"
+                android:text="0.00 EUR" />
 
             <TextView
                 android:id="@+id/item_sold_badge"
@@ -66,14 +65,24 @@
                 android:textSize="12sp"
                 android:textStyle="bold"
                 android:visibility="gone" />
-
         </LinearLayout>
 
+        <!-- Status (Available / Sold) -->
+        <TextView
+            android:id="@+id/item_status"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:textSize="13sp"
+            android:textColor="#4CAF50"
+            android:text="Available" />
+
+        <!-- Category + Seller -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="horizontal"
-            android:layout_marginTop="4dp">
+            android:layout_marginTop="6dp">
 
             <TextView
                 android:id="@+id/item_category"
@@ -89,7 +98,6 @@
                 android:layout_height="wrap_content"
                 android:textSize="13sp"
                 android:textColor="#9E9E9E" />
-
         </LinearLayout>
 
     </LinearLayout>

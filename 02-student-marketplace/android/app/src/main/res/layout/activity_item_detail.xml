@@ -120,18 +120,45 @@
                 android:textColor="@android:color/white"
                 android:padding="12dp" />
 
-            <Button
-                android:id="@+id/btn_contact_seller"
+            <!-- SMKT-S031 & S032: Action Buttons -->
+            <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="Contact Seller"
-                android:layout_marginTop="12dp"/>
-            <Button
-                android:id="@+id/btn_share_item"
+                android:orientation="horizontal"
+                android:layout_marginTop="12dp">
+                <Button
+                    android:id="@+id/btn_contact_seller"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:layout_marginEnd="8dp"
+                    android:text="Contact Seller"
+                    style="@style/Widget.MaterialComponents.Button.OutlinedButton"/>
+                <Button
+                    android:id="@+id/btn_share_item"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="Share"
+                    style="@style/Widget.MaterialComponents.Button.OutlinedButton"/>
+            </LinearLayout>
+
+            <!-- SMKT-S034: Similar Items -->
+            <TextView
+                android:id="@+id/similar_items_label"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="Share Item"
-                android:layout_marginTop="12dp"/>
+                android:layout_marginTop="32dp"
+                android:text="Similar Items"
+                android:textSize="18sp"
+                android:textStyle="bold" />
+
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/similar_items_recycler"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:orientation="horizontal" />
 
 
         </LinearLayout>
@@ -146,11 +173,5 @@
         android:layout_height="80dp"
         android:layout_centerInParent="true"
         android:visibility="visible" />
-
-    <androidx.recyclerview.widget.RecyclerView
-        android:id="@+id/similar_items_recycler"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="16dp"/>
 
 </RelativeLayout>

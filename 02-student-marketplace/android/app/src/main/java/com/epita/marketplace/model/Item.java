@@ -37,18 +37,16 @@ public class Item {
         item.imageUrl = json.optString("image_url", null);
         item.sellerName = json.getString("seller_name");
         item.createdAt = json.getString("created_at");
-        boolean isSold = json.getInt("is_sold") == 1;
-
 
         // Handle both boolean and integer (0/1) for is_sold
-//        Object isSoldObj = json.get("is_sold");
-//        if (isSoldObj instanceof Integer) {
-//            item.isSold = (Integer) isSoldObj != 0;
-//        } else if (isSoldObj instanceof Boolean) {
-//            item.isSold = (Boolean) isSoldObj;
-//        } else {
-//            item.isSold = false;
-//        }
+        Object isSoldObj = json.opt("is_sold");
+        if (isSoldObj instanceof Integer) {
+            item.isSold = (Integer) isSoldObj != 0;
+        } else if (isSoldObj instanceof Boolean) {
+            item.isSold = (Boolean) isSoldObj;
+        } else {
+            item.isSold = false;
+        }
 
         return item;
     }
