@@ -15,9 +15,10 @@ import com.epita.marketplace.model.Item;
 
 import java.util.ArrayList;
 import java.util.List;
-
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.resource.drawable.DrawableTransitionOptions;
+
+
 
 /**
  * RecyclerView adapter that displays a list of marketplace items as cards.

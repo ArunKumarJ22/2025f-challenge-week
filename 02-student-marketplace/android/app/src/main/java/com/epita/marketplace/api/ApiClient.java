@@ -16,7 +16,7 @@ import java.net.URL;
 public class ApiClient {
 
     // 10.0.2.2 is the Android emulator alias for host localhost
-    public static final String BASE_URL = "http://10.0.2.2:5000";
+    public static final String BASE_URL = "http://10.0.2.2:8000";
 
     /**
      * Perform a GET request and return the response body as a String.

@@ -75,7 +75,7 @@ public class MainActivity extends AppCompatActivity implements ItemAdapter.OnIte
         recyclerView.setAdapter(adapter);
 
         searchInput = findViewById(R.id.searchInput);
-
+        swipeRefresh = findViewById(R.id.swipeRefresh);
         swipeRefresh.setOnRefreshListener(() -> {
         resetPagination();
         loadItems();
