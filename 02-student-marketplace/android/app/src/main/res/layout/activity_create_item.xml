@@ -1,9 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!--SMKT‑S008 — Create Item Form (Android) Already Added-->
+<!-- S008: form fields | S009: Spinner for category | S010: inline errors via TextInputLayout -->
 <ScrollView
     xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent">
+
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -18,19 +19,20 @@
             android:textStyle="bold"
             android:layout_marginBottom="16dp" />
 
-        <!-- TODO: Read values, validate, and POST to /items -->
-
+        <!-- S008: Title -->
         <com.google.android.material.textfield.TextInputLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginBottom="8dp"
-            android:hint="Title">
+            android:hint="Title *">
             <com.google.android.material.textfield.TextInputEditText
                 android:id="@+id/create_title"
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content" />
+                android:layout_height="wrap_content"
+                android:inputType="text" />
         </com.google.android.material.textfield.TextInputLayout>
 
+        <!-- S008: Description -->
         <com.google.android.material.textfield.TextInputLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -41,14 +43,16 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:minLines="3"
-                android:gravity="top" />
+                android:gravity="top"
+                android:inputType="textMultiLine" />
         </com.google.android.material.textfield.TextInputLayout>
 
+        <!-- S008: Price -->
         <com.google.android.material.textfield.TextInputLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginBottom="8dp"
-            android:hint="Price (EUR)">
+            android:hint="Price (EUR) *">
             <com.google.android.material.textfield.TextInputEditText
                 android:id="@+id/create_price"
                 android:layout_width="match_parent"
@@ -56,26 +60,33 @@
                 android:inputType="numberDecimal" />
         </com.google.android.material.textfield.TextInputLayout>
 
-        <com.google.android.material.textfield.TextInputLayout
+        <!-- S009: Category Spinner — BUG FIX: replaced TextInputEditText with Spinner -->
+        <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="8dp"
-            android:hint="Category">
-            <com.google.android.material.textfield.TextInputEditText
-                android:id="@+id/create_category"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content" />
-        </com.google.android.material.textfield.TextInputLayout>
+            android:text="Category *"
+            android:textSize="12sp"
+            android:textColor="#666666"
+            android:layout_marginTop="4dp"
+            android:layout_marginBottom="2dp" />
 
+        <Spinner
+            android:id="@+id/spinner_category"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="8dp" />
+
+        <!-- S008: Seller name -->
         <com.google.android.material.textfield.TextInputLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginBottom="8dp"
-            android:hint="Your Name">
+            android:hint="Your Name *">
             <com.google.android.material.textfield.TextInputEditText
                 android:id="@+id/create_seller_name"
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content" />
+                android:layout_height="wrap_content"
+                android:inputType="textPersonName" />
         </com.google.android.material.textfield.TextInputLayout>
 
         <com.google.android.material.button.MaterialButton
@@ -83,7 +94,15 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="16dp"
-            android:text="Submit" />
+            android:text="Submit Listing" />
+
+        <ProgressBar
+            android:id="@+id/create_loading"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:layout_marginTop="8dp"
+            android:visibility="gone" />
 
     </LinearLayout>
 

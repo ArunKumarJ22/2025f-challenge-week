@@ -3,9 +3,9 @@ package com.epita.marketplace;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.ArrayAdapter;
+import android.widget.ProgressBar;
 import android.widget.Spinner;
 import android.widget.Toast;
-import android.widget.ProgressBar;
 
 import androidx.appcompat.app.AppCompatActivity;
 
@@ -20,23 +20,16 @@ import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
 
-/**
- * Create item form.
- *
- * TODO: Read values from the form fields.
- * TODO: Validate that title, price, category, and seller name are not empty.
- * TODO: POST the new item to /items using ApiClient.post().
- * TODO: On success, finish() to return to the list. On error, show a Toast.
- */
 public class CreateItemActivity extends AppCompatActivity {
 
-    TextInputEditText titleInput, descInput, priceInput, categoryInput, sellerInput;
+    TextInputEditText titleInput, descInput, priceInput, sellerInput;
     MaterialButton btnSubmit;
     ProgressBar loading;
     Spinner spinnerCategory;
 
+    // S009: category options
     private static final String[] CATEGORIES = {
-            "Select a category", "BOOKS", "ELECTRONICS", "FASHION", "HOME", "OTHER"
+        "Select a category", "Books", "Electronics", "Furniture", "Sports", "Fashion", "Other"
     };
 
     @Override
@@ -44,45 +37,30 @@ public class CreateItemActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_create_item);
 
-        titleInput = findViewById(R.id.create_title);
-        descInput = findViewById(R.id.create_description);
-        priceInput = findViewById(R.id.create_price);
-        categoryInput = findViewById(R.id.create_category);
+        titleInput  = findViewById(R.id.create_title);
+        descInput   = findViewById(R.id.create_description);
+        priceInput  = findViewById(R.id.create_price);
         sellerInput = findViewById(R.id.create_seller_name);
-        btnSubmit = findViewById(R.id.btn_submit_item);
+        btnSubmit   = findViewById(R.id.btn_submit_item);
+        loading     = findViewById(R.id.create_loading);
 
-        // SMKT-S009: Setup category dropdown (Spinner)
-        // spinnerCategory = findViewById(R.id.spinner_category);
+        // S009 BUG FIX: spinnerCategory was commented out so it was always null
+        spinnerCategory = findViewById(R.id.spinner_category);
+        ArrayAdapter<String> adapter = new ArrayAdapter<>(
+            this, android.R.layout.simple_spinner_item, CATEGORIES);
+        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        spinnerCategory.setAdapter(adapter);
 
-        // NEW: dropdown setup
-        if (spinnerCategory != null) {
-            ArrayAdapter<String> adapter = new ArrayAdapter<>(
-                    this,
-                    android.R.layout.simple_spinner_item,
-                    CATEGORIES
-            );
-            adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-            spinnerCategory.setAdapter(adapter);
-        }
-
-        // 🔥 Replace click (ONLY ADDITION)
         btnSubmit.setOnClickListener(v -> validateAndSubmit());
     }
 
+    // S010: client-side validation with inline errors
     private void validateAndSubmit() {
-
-        String title = titleInput.getText().toString().trim();
-        String priceStr = priceInput.getText().toString().trim();
-        String seller = sellerInput.getText().toString().trim();
-
-        String category = categoryInput.getText().toString().trim();
-
-        // SMKT-S009: Override category with spinner selection if used
-        if (spinnerCategory != null &&
-                !spinnerCategory.getSelectedItem().toString().equals("Select a category")) {
-            category = spinnerCategory.getSelectedItem().toString();
-            categoryInput.setText(category); // sync with old field
-        }
+        String title    = titleInput.getText() != null ? titleInput.getText().toString().trim() : "";
+        String priceStr = priceInput.getText() != null ? priceInput.getText().toString().trim() : "";
+        String seller   = sellerInput.getText() != null ? sellerInput.getText().toString().trim() : "";
+        int spinnerPos  = spinnerCategory.getSelectedItemPosition();
+        String category = spinnerPos == 0 ? "" : CATEGORIES[spinnerPos];
 
         boolean valid = true;
 
@@ -108,46 +86,27 @@ public class CreateItemActivity extends AppCompatActivity {
         }
 
         if (category.isEmpty()) {
-            Toast.makeText(this, "Select category", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, "Please select a category", Toast.LENGTH_SHORT).show();
             valid = false;
         }
 
         if (seller.isEmpty()) {
-            sellerInput.setError("Seller required");
+            sellerInput.setError("Seller name required");
             valid = false;
         }
 
         if (!valid) return;
 
-        // SMKT-S008: Submit to backend
-        submitItem();
+        submitItem(title,
+            descInput.getText() != null ? descInput.getText().toString().trim() : "",
+            Double.parseDouble(priceStr), category, seller);
     }
 
-    // SMKT-S008: Submit item to backend (POST /items)
-    private void submitItem() {
-
-        String title = titleInput.getText().toString().trim();
-        String desc = descInput.getText().toString().trim();
-        String priceStr = priceInput.getText().toString().trim();
-        String category = categoryInput.getText().toString().trim().toUpperCase();
-        String seller = sellerInput.getText().toString().trim();
-
-        if (title.isEmpty() || priceStr.isEmpty() || category.isEmpty() || seller.isEmpty()) {
-            Toast.makeText(this, "Please fill all required fields", Toast.LENGTH_SHORT).show();
-            return;
-        }
-
-        double price;
-        try {
-            price = Double.parseDouble(priceStr);
-        } catch (Exception e) {
-            Toast.makeText(this, "Invalid price", Toast.LENGTH_SHORT).show();
-            return;
-        }
-
-        // SMKT-S005: Show loading spinner during network request
-        loading = new ProgressBar(this);
-        loading.setVisibility(View.VISIBLE);
+    // S008 + S011: POST /items, finish() on 201
+    private void submitItem(String title, String desc, double price,
+                            String category, String seller) {
+        if (loading != null) loading.setVisibility(View.VISIBLE);
+        btnSubmit.setEnabled(false);
 
         new Thread(() -> {
             try {
@@ -156,52 +115,54 @@ public class CreateItemActivity extends AppCompatActivity {
                 conn.setRequestMethod("POST");
                 conn.setRequestProperty("Content-Type", "application/json");
                 conn.setDoOutput(true);
-                conn.setConnectTimeout(3000);
-                conn.setReadTimeout(3000);
+                conn.setConnectTimeout(5000);
+                conn.setReadTimeout(5000);
 
-                JSONObject json = new JSONObject();
-                json.put("title", title);
-                json.put("description", desc);
-                json.put("price", price);
-                json.put("category", category);
-                json.put("image_url", JSONObject.NULL);
-                json.put("seller_name", seller);
+                JSONObject body = new JSONObject();
+                body.put("title", title);
+                body.put("description", desc);
+                body.put("price", price);
+                body.put("category", category);
+                body.put("image_url", JSONObject.NULL);
+                body.put("seller_name", seller);
 
-                conn.getOutputStream().write(json.toString().getBytes());
+                conn.getOutputStream().write(body.toString().getBytes("UTF-8"));
 
                 int code = conn.getResponseCode();
 
-                // SMKT-S007: Display backend validation errors (400 Bad Request)
+                // S007: show backend 400 field errors
                 if (code == 400) {
                     BufferedReader reader = new BufferedReader(
-                            new InputStreamReader(conn.getErrorStream())
-                    );
+                        new InputStreamReader(conn.getErrorStream()));
                     StringBuilder sb = new StringBuilder();
                     String line;
                     while ((line = reader.readLine()) != null) sb.append(line);
-
-                    JSONObject errors = new JSONObject(sb.toString());
+                    JSONObject errObj = new JSONObject(sb.toString());
 
                     runOnUiThread(() -> {
-                        loading.setVisibility(View.GONE);
-                        Toast.makeText(this, errors.toString(), Toast.LENGTH_LONG).show();
+                        if (loading != null) loading.setVisibility(View.GONE);
+                        btnSubmit.setEnabled(true);
+                        Toast.makeText(this,
+                            errObj.optString("detail", errObj.toString()),
+                            Toast.LENGTH_LONG).show();
                     });
                     return;
                 }
 
-                // SMKT-S008: On success, show toast and finish()
+                // S011: on 201, go back — list refreshes via MainActivity.onResume
                 if (code == 201) {
                     runOnUiThread(() -> {
-                        loading.setVisibility(View.GONE);
-                        Toast.makeText(this, "Item created!", Toast.LENGTH_SHORT).show();
+                        if (loading != null) loading.setVisibility(View.GONE);
+                        Toast.makeText(this, "Item listed!", Toast.LENGTH_SHORT).show();
                         finish();
                     });
                 }
 
             } catch (Exception e) {
                 runOnUiThread(() -> {
-                    loading.setVisibility(View.GONE);
-                    Toast.makeText(this, "Error creating item", Toast.LENGTH_SHORT).show();
+                    if (loading != null) loading.setVisibility(View.GONE);
+                    btnSubmit.setEnabled(true);
+                    Toast.makeText(this, "Error: " + e.getMessage(), Toast.LENGTH_SHORT).show();
                 });
             }
         }).start();
